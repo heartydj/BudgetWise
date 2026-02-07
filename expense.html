@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Expenses - BudgetWise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        .budget-card {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 2.5rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+        }
+        .budget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .budget-form {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .budget-form input {
+            padding: 0.75rem;
+            border: none;
+            border-radius: 8px;
+            width: 200px;
+        }
+        .budget-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .budget-item {
+            text-align: center;
+        }
+        .budget-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+        .budget-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            color: var(--text-primary);
+        }
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        .category-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animated"></div>
+    <header>
+        <nav>
+            <div class="logo" onclick="window.location.href='index.html'">
+                <div class="logo-icon">💰</div>
+                BudgetWise
+            </div>
+            <div class="nav-links">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="expense.html" class="active">Expenses</a>
+                <a href="report.html">Reports</a>
+                <a href="insights.html">Insights</a>
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    <span id="themeIcon">🌙</span>
+                </button>
+                <button onclick="logout()" class="btn btn-danger">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="budget-card" id="budget">
+            <div class="budget-header">
+                <h2>Monthly Budget</h2>
+                <div class="budget-form">
+                    <input type="number" id="budgetInput" placeholder="Enter amount (₹)" style="color: #111827;">
+                    <button class="btn btn-primary" onclick="setBudget()">Set Budget</button>
+                </div>
+            </div>
+            <div class="budget-display">
+                <div class="budget-item">
+                    <div class="budget-label">Total Budget</div>
+                    <div class="budget-value" id="budgetAmount">₹0</div>
+                </div>
+                <div class="budget-item">
+                    <div class="budget-label">Spent</div>
+                    <div class="budget-value" id="spentAmount">₹0</div>
+                </div>
+                <div class="budget-item">
+                    <div class="budget-label">Remaining</div>
+                    <div class="budget-value" id="remainingAmount">₹0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 style="margin-bottom: 1.5rem;">Add New Expense</h2>
+            <form id="expenseForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="expenseDate">Date</label>
+                        <input type="date" id="expenseDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expenseCategory">Category</label>
+                        <select id="expenseCategory" required>
+                            <option value="">Select category</option>
+                            <option value="Food">🍔 Food</option>
+                            <option value="Transport">🚗 Transport</option>
+                            <option value="Shopping">🛍️ Shopping</option>
+                            <option value="Entertainment">🎬 Entertainment</option>
+                            <option value="Bills">📱 Bills</option>
+                            <option value="Healthcare">🏥 Healthcare</option>
+                            <option value="Education">📚 Education</option>
+                            <option value="Other">📦 Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="expenseAmount">Amount (₹)</label>
+                        <input type="number" id="expenseAmount" placeholder="0.00" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expenseDescription">Description</label>
+                        <input type="text" id="expenseDescription" placeholder="Brief description" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Expense</button>
+            </form>
+        </div>
+
+        <div class="card" style="margin-top: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <h2>Expense History</h2>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="filter-btn active" onclick="filterExpenses('all')">All</button>
+                    <button class="filter-btn" onclick="filterExpenses('today')">Today</button>
+                    <button class="filter-btn" onclick="filterExpenses('week')">This Week</button>
+                </div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="expenseTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenseTableBody">
+                        <tr>
+                            <td colspan="5" class="empty-state">
+                                <div style="font-size: 3rem;">📊</div>
+                                <p>No expenses recorded yet. Add your first expense above!</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 BudgetWise. All rights reserved.</p>
+    </footer>
+
+    <script src="theme.js"></script>
+    <script>
+        if (!localStorage.getItem("isLoggedIn")) {
+            window.location.href = "login.html";
+        }
+
+        document.getElementById("expenseDate").valueAsDate = new Date();
+        let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+        let currentFilter = 'all';
+
+        function setBudget() {
+            const budgetInput = document.getElementById("budgetInput");
+            const budget = parseFloat(budgetInput.value);
+
+            if (isNaN(budget) || budget <= 0) {
+                showToast("Please enter a valid budget amount", "error");
+                return;
+            }
+
+            localStorage.setItem("budgetLimit", budget);
+            budgetInput.value = "";
+            updateBudgetDisplay();
+            showToast("Budget updated successfully!", "success");
+        }
+
+        function updateBudgetDisplay() {
+            const budget = parseFloat(localStorage.getItem("budgetLimit")) || 0;
+            const totalExpenses = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+            const remaining = budget - totalExpenses;
+
+            document.getElementById("budgetAmount").textContent = formatCurrency(budget);
+            document.getElementById("spentAmount").textContent = formatCurrency(totalExpenses);
+            document.getElementById("remainingAmount").textContent = formatCurrency(remaining);
+            document.getElementById("remainingAmount").style.color = remaining < 0 ? '#ef4444' : 'white';
+        }
+
+        document.getElementById("expenseForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+
+            const expense = {
+                id: Date.now(),
+                date: document.getElementById("expenseDate").value,
+                category: document.getElementById("expenseCategory").value,
+                amount: parseFloat(document.getElementById("expenseAmount").value),
+                description: document.getElementById("expenseDescription").value
+            };
+
+            if (!expense.date || !expense.category || isNaN(expense.amount) || !expense.description) {
+                showToast("Please fill out all fields correctly!", "error");
+                return;
+            }
+
+            expenses.unshift(expense);
+            localStorage.setItem("expenses", JSON.stringify(expenses));
+
+            this.reset();
+            document.getElementById("expenseDate").valueAsDate = new Date();
+            
+            updateBudgetDisplay();
+            displayExpenses(currentFilter);
+            showToast("Expense added successfully!", "success");
+        });
+
+        function displayExpenses(filter = 'all') {
+            const tbody = document.getElementById("expenseTableBody");
+            
+            let filteredExpenses = [...expenses];
+            const today = new Date().toISOString().split('T')[0];
+            const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+            if (filter === 'today') {
+                filteredExpenses = expenses.filter(exp => exp.date === today);
+            } else if (filter === 'week') {
+                filteredExpenses = expenses.filter(exp => exp.date >= weekAgo);
+            }
+
+            if (filteredExpenses.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div style="font-size: 3rem;">📊</div>
+                            <p>No expenses found for this filter.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filteredExpenses.map(exp => `
+                <tr>
+                    <td>${formatDate(exp.date)}</td>
+                    <td><span class="category-badge" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6">${exp.category}</span></td>
+                    <td>${exp.description}</td>
+                    <td style="font-weight: 600; color: #ef4444">${formatCurrency(exp.amount)}</td>
+                    <td><button class="btn btn-danger" style="padding: 0.5rem 1rem;" onclick="deleteExpense(${exp.id})">Delete</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function deleteExpense(id) {
+            if (confirm("Are you sure you want to delete this expense?")) {
+                expenses = expenses.filter(exp => exp.id !== id);
+                localStorage.setItem("expenses", JSON.stringify(expenses));
+                updateBudgetDisplay();
+                displayExpenses(currentFilter);
+                showToast("Expense deleted successfully!", "success");
+            }
+        }
+
+        function filterExpenses(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            displayExpenses(filter);
+        }
+
+        function logout() {
+            if (confirm("Are you sure you want to logout?")) {
+                localStorage.removeItem("isLoggedIn");
+                localStorage.removeItem("currentUser");
+                showToast("Logged out successfully", "success");
+                setTimeout(() => {
+                    window.location.href = "login.html";
+                }, 1000);
+            }
+        }
+
+        updateBudgetDisplay();
+        displayExpenses();
+    </script>
+</body>
+</html>

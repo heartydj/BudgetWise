@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - BudgetWise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        .page-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+            border-radius: 16px;
+        }
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        .stat-change {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .action-card {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+            transition: all 0.3s;
+        }
+        .action-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+        .action-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .action-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+        .action-card p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animated"></div>
+    
+    <header>
+        <nav>
+            <div class="logo" onclick="window.location.href='index.html'">
+                <div class="logo-icon">💰</div>
+                BudgetWise
+            </div>
+            <div class="nav-links">
+                <a href="dashboard.html" class="active">Dashboard</a>
+                <a href="expense.html">Expenses</a>
+                <a href="report.html">Reports</a>
+                <a href="insights.html">Insights</a>
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    <span id="themeIcon">🌙</span>
+                </button>
+                <button onclick="logout()" class="btn btn-danger">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <div style="padding: 0 2rem;">
+                <h1 id="greeting">Good Day!</h1>
+                <p id="userWelcome">Here's an overview of your financial activity</p>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">💰 Total Budget</div>
+                <div class="stat-value" id="totalBudget">₹0</div>
+                <div class="stat-change">Monthly limit</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">📊 Total Expenses</div>
+                <div class="stat-value" id="totalExpenses">₹0</div>
+                <div class="stat-change" id="expenseChange">Track your spending</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">💵 Remaining</div>
+                <div class="stat-value" id="remaining">₹0</div>
+                <div class="stat-change" id="remainingPercent">Budget available</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">📈 Transactions</div>
+                <div class="stat-value" id="transactionCount">0</div>
+                <div class="stat-change">This month</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 style="margin-bottom: 1.5rem;">Quick Actions</h2>
+            <div class="quick-actions">
+                <a href="expense.html" class="action-card">
+                    <div class="action-icon">➕</div>
+                    <h3>Add Expense</h3>
+                    <p>Record a new transaction</p>
+                </a>
+                <a href="expense.html#budget" class="action-card">
+                    <div class="action-icon">🎯</div>
+                    <h3>Set Budget</h3>
+                    <p>Define spending limits</p>
+                </a>
+                <a href="report.html" class="action-card">
+                    <div class="action-icon">📊</div>
+                    <h3>View Reports</h3>
+                    <p>Analyze your spending</p>
+                </a>
+                <a href="insights.html" class="action-card">
+                    <div class="action-icon">💡</div>
+                    <h3>Get Insights</h3>
+                    <p>Financial recommendations</p>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 BudgetWise. All rights reserved.</p>
+    </footer>
+
+    <script src="theme.js"></script>
+    <script>
+        if (!localStorage.getItem("isLoggedIn")) {
+            window.location.href = "login.html";
+        }
+
+        const userName = localStorage.getItem("currentUser") || localStorage.getItem("username") || "User";
+        const hours = new Date().getHours();
+        const greeting = document.getElementById("greeting");
+        const userWelcome = document.getElementById("userWelcome");
+
+        if (hours < 12) {
+            greeting.textContent = `Good Morning, ${userName}! ☀️`;
+        } else if (hours < 18) {
+            greeting.textContent = `Good Afternoon, ${userName}! 🌤️`;
+        } else {
+            greeting.textContent = `Good Evening, ${userName}! 🌙`;
+        }
+        userWelcome.textContent = "Here's an overview of your financial activity";
+
+        function loadStats() {
+            const budget = parseFloat(localStorage.getItem("budgetLimit")) || 0;
+            const expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+            
+            const totalExpenses = expenses.reduce((sum, exp) => sum + (parseFloat(exp.amount) || 0), 0);
+            const remaining = budget - totalExpenses;
+            const remainingPercent = budget > 0 ? ((remaining / budget) * 100).toFixed(0) : 0;
+
+            document.getElementById("totalBudget").textContent = formatCurrency(budget);
+            document.getElementById("totalExpenses").textContent = formatCurrency(totalExpenses);
+            document.getElementById("remaining").textContent = formatCurrency(remaining);
+            document.getElementById("transactionCount").textContent = expenses.length;
+
+            const expenseChange = document.getElementById("expenseChange");
+            if (budget > 0) {
+                const percentSpent = ((totalExpenses / budget) * 100).toFixed(0);
+                expenseChange.textContent = `${percentSpent}% of budget used`;
+            }
+
+            const remainingPercentElement = document.getElementById("remainingPercent");
+            if (budget > 0) {
+                remainingPercentElement.textContent = `${remainingPercent}% remaining`;
+            }
+        }
+
+        function logout() {
+            if (confirm("Are you sure you want to logout?")) {
+                localStorage.removeItem("isLoggedIn");
+                localStorage.removeItem("currentUser");
+                showToast("Logged out successfully", "success");
+                setTimeout(() => {
+                    window.location.href = "login.html";
+                }, 1000);
+            }
+        }
+
+        loadStats();
+    </script>
+</body>
+</html>

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insights - BudgetWise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        .score-card {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 3rem;
+            font-weight: 800;
+        }
+        .insights-grid {
+            display: grid;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .insight-card {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid;
+            border-color: var(--primary);
+        }
+        .insight-card.success {
+            border-left-color: var(--secondary);
+        }
+        .insight-card.warning {
+            border-left-color: var(--warning);
+        }
+        .insight-card.danger {
+            border-left-color: var(--danger);
+        }
+        .insight-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .insight-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        .recommendations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        .recommendation-card {
+            background: var(--bg-card);
+            padding: 1.75rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+        .recommendation-card h4 {
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animated"></div>
+    <header>
+        <nav>
+            <div class="logo" onclick="window.location.href='index.html'">
+                <div class="logo-icon">💰</div>
+                BudgetWise
+            </div>
+            <div class="nav-links">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="expense.html">Expenses</a>
+                <a href="report.html">Reports</a>
+                <a href="insights.html" class="active">Insights</a>
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    <span id="themeIcon">🌙</span>
+                </button>
+                <button onclick="logout()" class="btn btn-danger">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Financial Insights</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Personalized recommendations to improve your financial health</p>
+
+        <div id="content"></div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 BudgetWise. All rights reserved.</p>
+    </footer>
+
+    <script src="theme.js"></script>
+    <script>
+        if (!localStorage.getItem("isLoggedIn")) {
+            window.location.href = "login.html";
+        }
+
+        const expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+        const budget = parseFloat(localStorage.getItem("budgetLimit")) || 0;
+
+        function calculateSpendingScore() {
+            if (expenses.length === 0 || budget === 0) return 0;
+            
+            const totalSpent = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+            const budgetUtilization = (totalSpent / budget) * 100;
+            
+            let score = 100;
+            
+            if (budgetUtilization > 100) {
+                score = Math.max(0, 100 - (budgetUtilization - 100) * 2);
+            } else if (budgetUtilization > 90) {
+                score = 70;
+            } else if (budgetUtilization > 75) {
+                score = 85;
+            }
+            
+            return Math.round(score);
+        }
+
+        function generateInsights() {
+            const content = document.getElementById('content');
+            
+            if (expenses.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state" style="padding: 4rem 2rem;">
+                        <div style="font-size: 5rem;">💡</div>
+                        <h2 style="margin-bottom: 1rem; color: var(--text-primary);">No Data Yet</h2>
+                        <p style="color: var(--text-secondary);">Start tracking your expenses to get personalized financial insights and recommendations.</p>
+                        <a href="expense.html" class="btn btn-primary" style="margin-top: 1.5rem; display: inline-block;">Add Your First Expense</a>
+                    </div>
+                `;
+                return;
+            }
+
+            const totalSpent = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+            const score = calculateSpendingScore();
+            const categoryTotals = {};
+            
+            expenses.forEach(exp => {
+                const category = exp.category || 'Other';
+                categoryTotals[category] = (categoryTotals[category] || 0) + parseFloat(exp.amount);
+            });
+
+            const topCategory = Object.entries(categoryTotals)
+                .sort((a, b) => b[1] - a[1])[0];
+
+            let insights = '';
+            let recommendations = '';
+
+            let scoreColor = score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444';
+            let scoreEmoji = score >= 80 ? '🌟' : score >= 60 ? '⚠️' : '🚨';
+            
+            insights += `
+                <div class="score-card">
+                    <div class="score-circle">
+                        ${score}
+                    </div>
+                    <h2 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Your Spending Score ${scoreEmoji}</h2>
+                    <p>${score >= 80 ? 'Excellent financial management!' : 
+                         score >= 60 ? 'Good, but room for improvement' : 
+                         'Needs attention - consider reviewing your budget'}</p>
+                </div>
+            `;
+
+            if (budget > 0) {
+                const remaining = budget - totalSpent;
+                const percentUsed = (totalSpent / budget * 100).toFixed(0);
+                
+                if (totalSpent > budget) {
+                    insights += `
+                        <div class="insight-card danger">
+                            <div class="insight-header">
+                                <div class="insight-icon" style="background: rgba(239, 68, 68, 0.1);">🚨</div>
+                                <h3 style="color: var(--text-primary);">Budget Exceeded</h3>
+                            </div>
+                            <div style="color: var(--text-secondary); margin-bottom: 1rem;">
+                                You've spent ${formatCurrency(totalSpent)}, which is ${formatCurrency(Math.abs(remaining))} over your budget of ${formatCurrency(budget)}.
+                            </div>
+                            <div style="font-weight: 600; color: var(--primary);">Action: Review and adjust your spending immediately</div>
+                        </div>
+                    `;
+                } else if (percentUsed > 90) {
+                    insights += `
+                        <div class="insight-card warning">
+                            <div class="insight-header">
+                                <div class="insight-icon" style="background: rgba(245, 158, 11, 0.1);">⚠️</div>
+                                <h3 style="color: var(--text-primary);">Approaching Budget Limit</h3>
+                            </div>
+                            <div style="color: var(--text-secondary); margin-bottom: 1rem;">
+                                You've used ${percentUsed}% of your budget. Only ${formatCurrency(remaining)} remaining.
+                            </div>
+                            <div style="font-weight: 600; color: var(--primary);">Action: Be cautious with remaining expenses</div>
+                        </div>
+                    `;
+                } else {
+                    insights += `
+                        <div class="insight-card success">
+                            <div class="insight-header">
+                                <div class="insight-icon" style="background: rgba(16, 185, 129, 0.1);">✅</div>
+                                <h3 style="color: var(--text-primary);">Budget on Track</h3>
+                            </div>
+                            <div style="color: var(--text-secondary); margin-bottom: 1rem;">
+                                Great job! You've spent ${percentUsed}% of your budget with ${formatCurrency(remaining)} remaining.
+                            </div>
+                            <div style="font-weight: 600; color: var(--primary);">Keep up the good work!</div>
+                        </div>
+                    `;
+                }
+            }
+
+            if (topCategory) {
+                const categoryPercent = ((topCategory[1] / totalSpent) * 100).toFixed(0);
+                insights += `
+                    <div class="insight-card">
+                        <div class="insight-header">
+                            <div class="insight-icon" style="background: rgba(59, 130, 246, 0.1);">📊</div>
+                            <h3 style="color: var(--text-primary);">Top Spending Category</h3>
+                        </div>
+                        <div style="color: var(--text-secondary); margin-bottom: 1rem;">
+                            ${topCategory[0]} accounts for ${categoryPercent}% of your total spending (${formatCurrency(topCategory[1])}).
+                        </div>
+                        <div style="font-weight: 600; color: var(--primary);">Consider if this aligns with your priorities</div>
+                    </div>
+                `;
+            }
+
+            recommendations = `
+                <div class="card">
+                    <h3 style="margin-bottom: 1.5rem; color: var(--text-primary);">Personalized Recommendations</h3>
+                    <div class="recommendations-grid">
+            `;
+
+            if (budget === 0) {
+                recommendations += `
+                    <div class="recommendation-card">
+                        <h4>🎯 Set a Budget</h4>
+                        <p style="color: var(--text-secondary); line-height: 1.6;">Start by setting a monthly budget to help control your spending and achieve your financial goals.</p>
+                    </div>
+                `;
+            }
+
+            if (topCategory && topCategory[1] / totalSpent > 0.4) {
+                recommendations += `
+                    <div class="recommendation-card">
+                        <h4>💡 Diversify Spending</h4>
+                        <p style="color: var(--text-secondary); line-height: 1.6;">Your ${topCategory[0]} expenses are quite high. Consider finding ways to reduce costs in this category.</p>
+                    </div>
+                `;
+            }
+
+            if (expenses.length < 10) {
+                recommendations += `
+                    <div class="recommendation-card">
+                        <h4>📝 Track More Expenses</h4>
+                        <p style="color: var(--text-secondary); line-height: 1.6;">Record all your expenses to get more accurate insights and better financial planning.</p>
+                    </div>
+                `;
+            }
+
+            recommendations += `
+                    <div class="recommendation-card">
+                        <h4>📅 Review Regularly</h4>
+                        <p style="color: var(--text-secondary); line-height: 1.6;">Check your reports weekly to stay informed about your spending patterns and make timely adjustments.</p>
+                    </div>
+                    <div class="recommendation-card">
+                        <h4>💰 Build Savings</h4>
+                        <p style="color: var(--text-secondary); line-height: 1.6;">Try to save at least 20% of your budget each month for emergencies and future goals.</p>
+                    </div>
+                    <div class="recommendation-card">
+                        <h4>🎓 Learn More</h4>
+                        <p style="color: var(--text-secondary); line-height: 1.6;">Educate yourself about personal finance through books, podcasts, or online resources.</p>
+                    </div>
+                </div>
+                </div>
+            `;
+
+            content.innerHTML = `
+                <div class="insights-grid">
+                    ${insights}
+                </div>
+                ${recommendations}
+            `;
+        }
+
+        function logout() {
+            if (confirm("Are you sure you want to logout?")) {
+                localStorage.removeItem("isLoggedIn");
+                localStorage.removeItem("currentUser");
+                showToast("Logged out successfully", "success");
+                setTimeout(() => {
+                    window.location.href = "login.html";
+                }, 1000);
+            }
+        }
+
+        generateInsights();
+    </script>
+</body>
+</html>
